@@ -29,6 +29,8 @@ const MathProblem = () => {
   const [correctAnswer, setCorrectAnswer] = useState<string | null>(null);
   const [showModal, setShowModal] = useState<boolean>(false);
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
+  const [score, setScore] = useState<number>(0); // Adăugăm starea pentru scor
+  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null); // Adăugăm feedback pentru răspunsuri greșite
 
   useEffect(() => {
     generateNewExample();
@@ -57,6 +59,7 @@ const MathProblem = () => {
     setLeftNumber(newLeftNumber);
     setRightNumber(newRightNumber);
     setDroppedItem(null); // Resetăm răspunsul afișat la ?
+    setFeedbackMessage(null); // Resetăm mesajul de feedback
   };
 
   const handleDragStart = (e: DragEvent<HTMLDivElement>, index: number) => {
@@ -73,9 +76,16 @@ const MathProblem = () => {
     e.preventDefault();
     if (e.type === 'drop' || e.type === 'touchend') {
       if (draggedItem === correctAnswer) {
+        setScore(score + 10); // Incrementăm scorul cu 10 puncte
         setShowModal(true); // Afișăm modalul
+        setFeedbackMessage(null); // Resetăm mesajul de feedback
+      } else {
+        setFeedbackMessage("Răspuns greșit! Încearcă din nou."); // Setăm mesajul de feedback pentru răspuns greșit
+        setTimeout(() => {
+          setDroppedItem(null); // Resetăm răspunsul afișat la ?
+          setFeedbackMessage(null); // Resetăm mesajul de feedback după o scurtă întârziere
+        }, 1000); // După 1 secundă, resetăm răspunsul
       }
-      setDroppedItem(draggedItem);
       setDraggedItem(null); // Resetează itemul tras
     }
   };
@@ -96,6 +106,7 @@ const MathProblem = () => {
   return (
     <div className="flex flex-col items-center justify-center space-y-4 p-4 sm:p-6 lg:p-8">
       <div className="text-lg font-bold text-center">Calculați suma a două numere</div>
+      <div className="text-xl font-bold text-center mb-4">Scor: {score}</div> {/* Afișăm scorul curent */}
       <div className="flex flex-col items-center space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
         <div className="w-16 h-16 sm:w-20 sm:h-20 bg-green-400 rounded-lg flex items-center justify-center text-white text-xl sm:text-2xl font-bold">
           {leftNumber}
@@ -106,7 +117,7 @@ const MathProblem = () => {
         </div>
         <div className="text-xl sm:text-2xl font-bold">=</div>
         <div
-          className="w-16 h-16 sm:w-20 sm:h-20 bg-red-500 rounded-lg flex items-center justify-center text-white text-xl sm:text-2xl font-bold"
+          className={`w-16 h-16 sm:w-20 sm:h-20 rounded-lg flex items-center justify-center text-white text-xl sm:text-2xl font-bold ${droppedItem === correctAnswer ? 'bg-green-500' : 'bg-red-500'}`}
           onDrop={handleDrop}
           onDragOver={handleDragOver}
           onTouchEnd={(e) => handleDrop(e)}
@@ -129,6 +140,9 @@ const MathProblem = () => {
           </div>
         ))}
       </div>
+      {feedbackMessage && (
+        <div className="text-red-500 font-bold text-center mt-4">{feedbackMessage}</div>
+      )}
       {showModal && (
         <Modal 
           message="Răspuns corect!" 
