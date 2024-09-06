@@ -8,10 +8,10 @@ const getRandomNumber = (min: number, max: number) => Math.floor(Math.random() *
 const Modal = ({ message, onClose }: { message: string, onClose: () => void }) => {
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4">
-      <div className="bg-white p-6 sm:p-8 md:p-10 lg:p-12 rounded-lg shadow-lg max-w-sm sm:max-w-md">
-        <div className="text-lg font-bold">{message}</div>
+      <div className="bg-white p-6 sm:p-8 rounded-lg shadow-lg max-w-sm w-full">
+        <div className="text-lg font-bold text-center">{message}</div>
         <button
-          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg"
+          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg w-full"
           onClick={onClose}
         >
           Treci la alt exemplu
@@ -89,8 +89,8 @@ const MathProblem = () => {
 
   return (
     <div className="flex flex-col items-center justify-center space-y-4 p-4 sm:p-6 lg:p-8">
-      <div className="text-lg font-bold">Calculați suma a două numere</div>
-      <div className="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
+      <div className="text-lg font-bold text-center">Calculați suma a două numere</div>
+      <div className="flex flex-col items-center space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
         <div className="w-16 h-16 sm:w-20 sm:h-20 bg-green-400 rounded-lg flex items-center justify-center text-white text-xl sm:text-2xl font-bold">
           {leftNumber}
         </div>
@@ -107,8 +107,8 @@ const MathProblem = () => {
           {droppedItem || '?'}
         </div>
       </div>
-      <div className="text-lg font-bold">Lista Răspunsurilor</div>
-      <div className="flex flex-wrap justify-center gap-4">
+      <div className="text-lg font-bold text-center">Lista Răspunsurilor</div>
+      <div className="flex flex-wrap justify-center gap-2 sm:gap-4">
         {items.map((item, index) => (
           <div
             key={item.id}
