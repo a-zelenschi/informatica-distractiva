@@ -6,35 +6,17 @@ const MAX_ATTEMPTS = 3; // Numărul maxim de încercări
 // Funcție pentru a genera un număr aleatoriu între un minim și un maxim specificat
 const getRandomNumber = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
 
-const Modal = ({ message, onClose }: { message: string, onClose: () => void }) => {
-  return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50 p-4">
-      <div className="bg-white p-6 sm:p-8 rounded-lg shadow-lg max-w-sm w-full">
-        <div className="text-lg font-bold text-center">{message}</div>
-        <button
-          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg w-full"
-          onClick={onClose}
-        >
-          Treci la alt exemplu
-        </button>
-      </div>
-    </div>
-  );
-};
-
 const MathProblem = () => {
   const [items, setItems] = useState<{ id: string; content: string }[]>([]);
   const [droppedItem, setDroppedItem] = useState<string | null>(null);
   const [leftNumber, setLeftNumber] = useState<number>(0);
   const [rightNumber, setRightNumber] = useState<number>(0);
   const [correctAnswer, setCorrectAnswer] = useState<string | null>(null);
-  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null); // Adăugăm feedback pentru răspunsuri greșite
+  const [feedbackMessage, setFeedbackMessage] = useState<{ text: string, type: 'correct' | 'incorrect' } | null>(null);
   const [score, setScore] = useState<number>(0); // Adăugăm starea pentru scor
   const [attempts, setAttempts] = useState<number>(0); // Număr de încercări greșite
-  const [showWinningModal, setShowWinningModal] = useState<boolean>(false); // Starea pentru modalul de câștig
-  const [showLosingModal, setShowLosingModal] = useState<boolean>(false); // Starea pentru modalul de pierdere
-  const [draggedItem, setDraggedItem] = useState<string | null>(null); // Starea pentru itemul tras
   const [hearts, setHearts] = useState<number[]>([1, 1, 1]); // Starea pentru inimile rămase (1 - roșu, 0 - gri)
+  const [draggedItem, setDraggedItem] = useState<string | null>(null); // Starea pentru itemul tras
 
   useEffect(() => {
     generateNewExample();
@@ -81,16 +63,14 @@ const MathProblem = () => {
     if (e.type === 'drop' || e.type === 'touchend') {
       if (draggedItem === correctAnswer) {
         setScore(score + 10); // Incrementăm scorul cu 10 puncte
-        setFeedbackMessage("Răspuns corect!"); // Setăm mesajul de feedback
+        setFeedbackMessage({ text: "Răspuns corect!", type: 'correct' }); // Setăm mesajul de feedback
         setAttempts(0); // Resetăm numărul de încercări
         setHearts([1, 1, 1]); // Resetăm inimile la roșu
-        setShowWinningModal(true); // Afișăm modalul de câștig
         setTimeout(() => {
-          setShowWinningModal(false);
-          generateNewExample(); // Generăm un nou exemplu după 2 secunde
-        }, 2000); // După 2 secunde, generăm un nou exemplu
+          generateNewExample(); // Generăm un nou exemplu după 1 secundă
+        }, 1500); // După 1 secundă, generăm un nou exemplu
       } else {
-        setFeedbackMessage("Răspuns greșit! Încearcă din nou."); // Setăm mesajul de feedback pentru răspuns greșit
+        setFeedbackMessage({ text: "Răspuns greșit! Încearcă din nou.", type: 'incorrect' }); // Setăm mesajul de feedback pentru răspuns greșit
         const newAttempts = attempts + 1;
         setAttempts(newAttempts); // Incrementăm numărul de încercări
 
@@ -104,8 +84,7 @@ const MathProblem = () => {
         }
 
         if (newAttempts >= MAX_ATTEMPTS) {
-          setShowLosingModal(true); // Afișăm modalul de pierdere
-          setFeedbackMessage("Ai pierdut! Încearcă din nou."); // Setăm mesajul de pierdere
+          setFeedbackMessage({ text: "Ai pierdut! Încearcă din nou.", type: 'incorrect' }); // Setăm mesajul de pierdere
           setTimeout(() => {
             resetGame(); // Resetează jocul după un timp
           }, 2000); // După 2 secunde, resetăm jocul
@@ -128,16 +107,6 @@ const MathProblem = () => {
     e.preventDefault();
   };
 
-  const handleCloseWinningModal = () => {
-    setShowWinningModal(false);
-    generateNewExample(); // Generăm un nou exemplu la închiderea modalului de câștig
-  };
-
-  const handleCloseLosingModal = () => {
-    setShowLosingModal(false);
-    resetGame(); // Resetează jocul după închiderea modalului de pierdere
-  };
-
   const resetGame = () => {
     setScore(0); // Resetăm scorul
     setAttempts(0); // Resetăm numărul de încercări
@@ -148,6 +117,8 @@ const MathProblem = () => {
   const getHeartColor = (index: number) => {
     return hearts[index] === 1 ? 'bg-red-500' : 'bg-gray-500'; // Roșu sau gri
   };
+
+  const feedbackClass = feedbackMessage?.type === 'correct' ? 'text-green-500' : 'text-red-500';
 
   return (
     <div className="flex flex-col items-center justify-center space-y-4 p-4 sm:p-6 lg:p-8">
@@ -210,19 +181,9 @@ const MathProblem = () => {
         ))}
       </div>
       {feedbackMessage && (
-        <div className="text-red-500 font-bold text-center mt-4">{feedbackMessage}</div>
-      )}
-      {showWinningModal && (
-        <Modal 
-          message="Răspuns corect!" 
-          onClose={handleCloseWinningModal}
-        />
-      )}
-      {showLosingModal && (
-        <Modal 
-          message="Ai pierdut! Încearcă din nou." 
-          onClose={handleCloseLosingModal}
-        />
+        <div className={`text-lg font-bold text-center mt-4 ${feedbackClass}`}>
+          {feedbackMessage.text}
+        </div>
       )}
     </div>
   );
