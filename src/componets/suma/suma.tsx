@@ -3,7 +3,6 @@ import { useState, useEffect, DragEvent, TouchEvent } from 'react';
 const MAX_ITEMS = 5;
 const MAX_ATTEMPTS = 3; // Numărul maxim de încercări
 
-// Funcție pentru a genera un număr aleatoriu între un minim și un maxim specificat
 const getRandomNumber = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
 
 const MathProblem = () => {
@@ -21,6 +20,7 @@ const MathProblem = () => {
   const [showModalScore, setShowModalScore] = useState<boolean>(false); // Starea pentru modalul de salvare scor
   const [email, setEmail] = useState<string>(''); // Starea pentru email
   const [emailError, setEmailError] = useState<string>(''); // Starea pentru mesajul de eroare al emailului
+  const [emailSent, setEmailSent] = useState<boolean>(false); // Starea pentru confirmarea trimiterii emailului
 
   useEffect(() => {
     generateNewExample();
@@ -138,24 +138,39 @@ const MathProblem = () => {
     setEmailError('');
   };
 
-  const handleSaveScoreConfirm = () => {
+  const handleSaveScoreConfirm = async () => {
     if (!validateEmail(email)) {
       setEmailError('Adresa de email nu este validă.');
       return;
     }
-    // Implementați logica pentru trimiterea scorului la email aici
-    console.log("Scorul trimis la email:", email, score);
-    setShowModalScore(false);
-    resetGame();
+
+    try {
+      const response = await fetch('http://localhost:3001/send-score', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, score }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setEmailSent(true);
+        setShowModalScore(false);
+      } else {
+        setEmailError('Eroare la trimiterea emailului.');
+      }
+    } catch (error) {
+      setEmailError('Eroare la trimiterea emailului.');
+    }
   };
 
   const handleSaveScoreCancel = () => {
-    setShowModalScore(false);
-    resetGame();
+    setShowModalScore(false); // Închide modalul de salvare a scorului
+    resetGame(); // Resetează jocul
   };
 
   const validateEmail = (email: string) => {
-    // Regex simplu pentru validarea emailului
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return re.test(email);
   };
@@ -278,6 +293,7 @@ const MathProblem = () => {
                 Anulează
               </button>
             </div>
+            {emailSent && <div className="text-green-500 text-sm mt-2">Scorul a fost trimis cu succes!</div>}
           </div>
         </div>
       )}
