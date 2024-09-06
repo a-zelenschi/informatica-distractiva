@@ -17,6 +17,10 @@ const MathProblem = () => {
   const [attempts, setAttempts] = useState<number>(0); // Număr de încercări greșite
   const [hearts, setHearts] = useState<number[]>([1, 1, 1]); // Starea pentru inimile rămase (1 - roșu, 0 - gri)
   const [draggedItem, setDraggedItem] = useState<string | null>(null); // Starea pentru itemul tras
+  const [showModal, setShowModal] = useState<boolean>(false); // Starea pentru modal
+  const [showModalScore, setShowModalScore] = useState<boolean>(false); // Starea pentru modalul de salvare scor
+  const [email, setEmail] = useState<string>(''); // Starea pentru email
+  const [emailError, setEmailError] = useState<string>(''); // Starea pentru mesajul de eroare al emailului
 
   useEffect(() => {
     generateNewExample();
@@ -62,40 +66,39 @@ const MathProblem = () => {
     e.preventDefault();
     if (e.type === 'drop' || e.type === 'touchend') {
       if (draggedItem === correctAnswer) {
-        setScore(score + 10); // Incrementăm scorul cu 10 puncte
-        setFeedbackMessage({ text: "Răspuns corect!", type: 'correct' }); // Setăm mesajul de feedback
+        setScore(prevScore => prevScore + 10); // Incrementăm scorul cu 10 puncte
+        setFeedbackMessage({ text: "Răspuns corect!", type: 'correct' });
         setDroppedItem(null); // Resetăm răspunsul afișat la ?
 
         setTimeout(() => {
-          generateNewExample(); // Generăm un nou exemplu după 1 secundă
-        }, 1500); // După 1 secundă, generăm un nou exemplu
+          generateNewExample();
+        }, 1500);
       } else {
-        setFeedbackMessage({ text: "Răspuns greșit! Încearcă din nou.", type: 'incorrect' }); // Setăm mesajul de feedback pentru răspuns greșit
-        const newAttempts = attempts + 1;
-        setAttempts(newAttempts); // Incrementăm numărul de încercări
+        setFeedbackMessage({ text: "Răspuns greșit! Încearcă din nou.", type: 'incorrect' });
+        setAttempts(prevAttempts => {
+          const newAttempts = prevAttempts + 1;
 
-        // Actualizăm starea inimilor
-        if (newAttempts <= MAX_ATTEMPTS) {
+          // Actualizăm starea inimilor
           setHearts(prevHearts => {
             const updatedHearts = [...prevHearts];
             updatedHearts[MAX_ATTEMPTS - newAttempts] = 0; // Facem inima gri
             return updatedHearts;
           });
-        }
 
-        if (newAttempts >= MAX_ATTEMPTS) {
-          setFeedbackMessage({ text: "Ai pierdut! Încearcă din nou.", type: 'incorrect' }); // Setăm mesajul de pierdere
+          if (newAttempts >= MAX_ATTEMPTS) {
+            setShowModal(true); // Arătăm modalul când toate inimile sunt utilizate
+            return newAttempts;
+          }
+
           setTimeout(() => {
-            resetGame(); // Resetează jocul după un timp
-          }, 2000); // După 2 secunde, resetăm jocul
-        } else {
-          setTimeout(() => {
-            setDroppedItem(null); // Resetăm răspunsul afișat la ?
-            setFeedbackMessage(null); // Resetăm mesajul de feedback după o scurtă întârziere
-          }, 1000); // După 1 secundă, resetăm răspunsul
-        }
+            setDroppedItem(null);
+            setFeedbackMessage(null);
+          }, 1000);
+
+          return newAttempts;
+        });
       }
-      setDraggedItem(null); // Resetează itemul tras
+      setDraggedItem(null);
     }
   };
 
@@ -119,6 +122,43 @@ const MathProblem = () => {
   };
 
   const feedbackClass = feedbackMessage?.type === 'correct' ? 'text-green-500' : 'text-red-500';
+
+  const handleRestart = () => {
+    setShowModal(false);
+    resetGame();
+  };
+
+  const handleSaveScore = () => {
+    setShowModal(false);
+    setShowModalScore(true);
+  };
+
+  const handleEmailChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEmail(e.target.value);
+    setEmailError('');
+  };
+
+  const handleSaveScoreConfirm = () => {
+    if (!validateEmail(email)) {
+      setEmailError('Adresa de email nu este validă.');
+      return;
+    }
+    // Implementați logica pentru trimiterea scorului la email aici
+    console.log("Scorul trimis la email:", email, score);
+    setShowModalScore(false);
+    resetGame();
+  };
+
+  const handleSaveScoreCancel = () => {
+    setShowModalScore(false);
+    resetGame();
+  };
+
+  const validateEmail = (email: string) => {
+    // Regex simplu pentru validarea emailului
+    const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return re.test(email);
+  };
 
   return (
     <div className="flex flex-col items-center justify-center space-y-4 p-4 sm:p-6 lg:p-8">
@@ -183,6 +223,62 @@ const MathProblem = () => {
       {feedbackMessage && (
         <div className={`text-lg font-bold text-center mt-4 ${feedbackClass}`}>
           {feedbackMessage.text}
+        </div>
+      )}
+
+      {/* Modalul de pierdere */}
+      {showModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg text-center">
+            <div className="text-lg font-bold mb-4">Ai pierdut! Încearcă din nou?</div>
+            <div className="flex justify-center space-x-4">
+              <button
+                className="bg-blue-500 text-white px-4 py-2 rounded-lg"
+                onClick={handleRestart}
+              >
+                Începe din nou
+              </button>
+              <button
+                className="bg-green-500 text-white px-4 py-2 rounded-lg"
+                onClick={handleSaveScore}
+              >
+                Salvează scorul
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modalul pentru salvarea scorului */}
+      {showModalScore && (
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-75 z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg text-center">
+            <div className="text-lg font-bold mb-4">Scorul tău: {score}</div>
+            <div className="mb-4">
+              <label className="block text-sm font-bold mb-2">Introdu adresa de email:</label>
+              <input
+                type="email"
+                value={email}
+                onChange={handleEmailChange}
+                className="border border-gray-300 p-2 rounded-lg w-full"
+              />
+              {emailError && <div className="text-red-500 text-sm mt-2">{emailError}</div>}
+            </div>
+            <div className="flex justify-center space-x-4">
+              <button
+                className="bg-green-500 text-white px-4 py-2 rounded-lg"
+                onClick={handleSaveScoreConfirm}
+              >
+                Confirmă
+              </button>
+              <button
+                className="bg-red-500 text-white px-4 py-2 rounded-lg"
+                onClick={handleSaveScoreCancel}
+              >
+                Anulează
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
