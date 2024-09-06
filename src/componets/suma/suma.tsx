@@ -1,6 +1,7 @@
 import { useState, useEffect, DragEvent, TouchEvent } from 'react';
 
-const MAX_ITEMS = 4;
+const MAX_ITEMS = 5;
+const MAX_ATTEMPTS = 3; // Numărul maxim de încercări
 
 // Funcție pentru a genera un număr aleatoriu între un minim și un maxim specificat
 const getRandomNumber = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
@@ -27,10 +28,13 @@ const MathProblem = () => {
   const [leftNumber, setLeftNumber] = useState<number>(0);
   const [rightNumber, setRightNumber] = useState<number>(0);
   const [correctAnswer, setCorrectAnswer] = useState<string | null>(null);
-  const [showModal, setShowModal] = useState<boolean>(false);
-  const [draggedItem, setDraggedItem] = useState<string | null>(null);
-  const [score, setScore] = useState<number>(0); // Adăugăm starea pentru scor
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null); // Adăugăm feedback pentru răspunsuri greșite
+  const [score, setScore] = useState<number>(0); // Adăugăm starea pentru scor
+  const [attempts, setAttempts] = useState<number>(0); // Număr de încercări greșite
+  const [showWinningModal, setShowWinningModal] = useState<boolean>(false); // Starea pentru modalul de câștig
+  const [showLosingModal, setShowLosingModal] = useState<boolean>(false); // Starea pentru modalul de pierdere
+  const [draggedItem, setDraggedItem] = useState<string | null>(null); // Starea pentru itemul tras
+  const [hearts, setHearts] = useState<number[]>([1, 1, 1]); // Starea pentru inimile rămase (1 - roșu, 0 - gri)
 
   useEffect(() => {
     generateNewExample();
@@ -77,14 +81,40 @@ const MathProblem = () => {
     if (e.type === 'drop' || e.type === 'touchend') {
       if (draggedItem === correctAnswer) {
         setScore(score + 10); // Incrementăm scorul cu 10 puncte
-        setShowModal(true); // Afișăm modalul
-        setFeedbackMessage(null); // Resetăm mesajul de feedback
+        setFeedbackMessage("Răspuns corect!"); // Setăm mesajul de feedback
+        setAttempts(0); // Resetăm numărul de încercări
+        setHearts([1, 1, 1]); // Resetăm inimile la roșu
+        setShowWinningModal(true); // Afișăm modalul de câștig
+        setTimeout(() => {
+          setShowWinningModal(false);
+          generateNewExample(); // Generăm un nou exemplu după 2 secunde
+        }, 2000); // După 2 secunde, generăm un nou exemplu
       } else {
         setFeedbackMessage("Răspuns greșit! Încearcă din nou."); // Setăm mesajul de feedback pentru răspuns greșit
-        setTimeout(() => {
-          setDroppedItem(null); // Resetăm răspunsul afișat la ?
-          setFeedbackMessage(null); // Resetăm mesajul de feedback după o scurtă întârziere
-        }, 1000); // După 1 secundă, resetăm răspunsul
+        const newAttempts = attempts + 1;
+        setAttempts(newAttempts); // Incrementăm numărul de încercări
+
+        // Actualizăm starea inimilor
+        if (newAttempts <= MAX_ATTEMPTS) {
+          setHearts(prevHearts => {
+            const updatedHearts = [...prevHearts];
+            updatedHearts[MAX_ATTEMPTS - newAttempts] = 0; // Facem inima gri
+            return updatedHearts;
+          });
+        }
+
+        if (newAttempts >= MAX_ATTEMPTS) {
+          setShowLosingModal(true); // Afișăm modalul de pierdere
+          setFeedbackMessage("Ai pierdut! Încearcă din nou."); // Setăm mesajul de pierdere
+          setTimeout(() => {
+            resetGame(); // Resetează jocul după un timp
+          }, 2000); // După 2 secunde, resetăm jocul
+        } else {
+          setTimeout(() => {
+            setDroppedItem(null); // Resetăm răspunsul afișat la ?
+            setFeedbackMessage(null); // Resetăm mesajul de feedback după o scurtă întârziere
+          }, 1000); // După 1 secundă, resetăm răspunsul
+        }
       }
       setDraggedItem(null); // Resetează itemul tras
     }
@@ -98,15 +128,54 @@ const MathProblem = () => {
     e.preventDefault();
   };
 
-  const handleCloseModal = () => {
-    setShowModal(false);
-    generateNewExample(); // Generăm un nou exemplu la închiderea modalului
+  const handleCloseWinningModal = () => {
+    setShowWinningModal(false);
+    generateNewExample(); // Generăm un nou exemplu la închiderea modalului de câștig
+  };
+
+  const handleCloseLosingModal = () => {
+    setShowLosingModal(false);
+    resetGame(); // Resetează jocul după închiderea modalului de pierdere
+  };
+
+  const resetGame = () => {
+    setScore(0); // Resetăm scorul
+    setAttempts(0); // Resetăm numărul de încercări
+    setHearts([1, 1, 1]); // Resetăm inimile la roșu
+    generateNewExample(); // Generăm un nou exemplu
+  };
+
+  const getHeartColor = (index: number) => {
+    return hearts[index] === 1 ? 'bg-red-500' : 'bg-gray-500'; // Roșu sau gri
   };
 
   return (
     <div className="flex flex-col items-center justify-center space-y-4 p-4 sm:p-6 lg:p-8">
-      <div className="text-lg font-bold text-center">Calculați suma a două numere</div>
-      <div className="text-xl font-bold text-center mb-4">Scor: {score}</div> {/* Afișăm scorul curent */}
+      <div className="text-lg font-bold text-center mb-4">Calculați suma a două numere</div>
+      <div className="flex space-x-2 mb-4">
+        {hearts.map((_, index) => (
+          <div
+            key={index}
+            className={`w-8 h-8 sm:w-12 sm:h-12 ${getHeartColor(index)} rounded-full flex items-center justify-center`}
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              className="w-6 h-6 sm:w-8 sm:h-8 text-white"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"
+              />
+            </svg>
+          </div>
+        ))}
+      </div>
+      <div className="text-xl font-bold text-center mb-4">Scor: {score}</div>
       <div className="flex flex-col items-center space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
         <div className="w-16 h-16 sm:w-20 sm:h-20 bg-green-400 rounded-lg flex items-center justify-center text-white text-xl sm:text-2xl font-bold">
           {leftNumber}
@@ -143,10 +212,16 @@ const MathProblem = () => {
       {feedbackMessage && (
         <div className="text-red-500 font-bold text-center mt-4">{feedbackMessage}</div>
       )}
-      {showModal && (
+      {showWinningModal && (
         <Modal 
           message="Răspuns corect!" 
-          onClose={handleCloseModal}
+          onClose={handleCloseWinningModal}
+        />
+      )}
+      {showLosingModal && (
+        <Modal 
+          message="Ai pierdut! Încearcă din nou." 
+          onClose={handleCloseLosingModal}
         />
       )}
     </div>
