@@ -1,4 +1,4 @@
-import { useState, useEffect, DragEvent } from 'react';
+import { useState, useEffect, DragEvent, TouchEvent } from 'react';
 
 const MAX_ITEMS = 5;
 
@@ -28,6 +28,7 @@ const MathProblem = () => {
   const [rightNumber, setRightNumber] = useState<number>(0);
   const [correctAnswer, setCorrectAnswer] = useState<string | null>(null);
   const [showModal, setShowModal] = useState<boolean>(false);
+  const [draggedItem, setDraggedItem] = useState<string | null>(null);
 
   useEffect(() => {
     generateNewExample();
@@ -60,25 +61,30 @@ const MathProblem = () => {
 
   const handleDragStart = (e: DragEvent<HTMLDivElement>, index: number) => {
     e.dataTransfer.setData('text/plain', index.toString());
+    setDraggedItem(items[index].content);
   };
 
-  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
+  const handleTouchStart = (e: TouchEvent<HTMLDivElement>, index: number) => {
     e.preventDefault();
-    const sourceIndex = e.dataTransfer.getData('text/plain');
+    setDraggedItem(items[index].content);
+  };
 
-    if (sourceIndex) {
-      const sourceIdx = parseInt(sourceIndex, 10);
-      const item = items[sourceIdx];
-      setDroppedItem(item.content);
-
-      // Verificăm dacă răspunsul selectat este corect
-      if (item.content === correctAnswer) {
+  const handleDrop = (e: DragEvent<HTMLDivElement> | TouchEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    if (e.type === 'drop' || e.type === 'touchend') {
+      if (draggedItem === correctAnswer) {
         setShowModal(true); // Afișăm modalul
       }
+      setDroppedItem(draggedItem);
+      setDraggedItem(null); // Resetează itemul tras
     }
   };
 
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+  };
+
+  const handleTouchMove = (e: TouchEvent<HTMLDivElement>) => {
     e.preventDefault();
   };
 
@@ -103,6 +109,8 @@ const MathProblem = () => {
           className="w-16 h-16 sm:w-20 sm:h-20 bg-red-500 rounded-lg flex items-center justify-center text-white text-xl sm:text-2xl font-bold"
           onDrop={handleDrop}
           onDragOver={handleDragOver}
+          onTouchEnd={(e) => handleDrop(e)}
+          onTouchMove={handleTouchMove}
         >
           {droppedItem || '?'}
         </div>
@@ -115,7 +123,7 @@ const MathProblem = () => {
             className="w-16 h-16 sm:w-20 sm:h-20 bg-red-500 rounded-lg flex items-center justify-center text-white text-xl sm:text-2xl font-bold"
             draggable
             onDragStart={(e) => handleDragStart(e, index)}
-            data-index={index}
+            onTouchStart={(e) => handleTouchStart(e, index)}
           >
             {item.content}
           </div>
