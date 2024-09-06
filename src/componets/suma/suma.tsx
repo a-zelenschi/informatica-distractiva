@@ -1,6 +1,6 @@
 import { useState, useEffect, DragEvent, TouchEvent } from 'react';
 
-const MAX_ITEMS = 5;
+const MAX_ITEMS = 4;
 
 // Funcție pentru a genera un număr aleatoriu între un minim și un maxim specificat
 const getRandomNumber = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
