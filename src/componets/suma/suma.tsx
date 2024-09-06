@@ -1,4 +1,4 @@
-import  { useState, useEffect, DragEvent } from 'react';
+import { useState, useEffect, DragEvent } from 'react';
 
 const MAX_ITEMS = 5;
 
@@ -22,7 +22,7 @@ const Modal = ({ message, onClose }: { message: string, onClose: () => void }) =
 };
 
 const MathProblem = () => {
-  const [items, setItems] = useState<{ id: string, content: string }[]>([]);
+  const [items, setItems] = useState<{ id: string; content: string }[]>([]);
   const [droppedItem, setDroppedItem] = useState<string | null>(null);
   const [leftNumber, setLeftNumber] = useState<number>(0);
   const [rightNumber, setRightNumber] = useState<number>(0);
@@ -39,7 +39,7 @@ const MathProblem = () => {
     const sum = newLeftNumber + newRightNumber;
 
     // Generăm răspunsuri posibile
-    const newItems: { id: string, content: string }[] = [];
+    const newItems: { id: string; content: string }[] = [];
     while (newItems.length < MAX_ITEMS - 1) {
       const randomAnswer = getRandomNumber(1, 20).toString();
       if (!newItems.some(item => item.content === randomAnswer) && randomAnswer !== sum.toString()) {
@@ -66,7 +66,7 @@ const MathProblem = () => {
     e.preventDefault();
     const sourceIndex = e.dataTransfer.getData('text/plain');
 
-    if (sourceIndex && sourceIndex !== null) {
+    if (sourceIndex) {
       const sourceIdx = parseInt(sourceIndex, 10);
       const item = items[sourceIdx];
       setDroppedItem(item.content);

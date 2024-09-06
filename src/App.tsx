@@ -1,19 +1,13 @@
-import MathProblem from "./componets/suma/suma"
+import MathProblem from "./componets/suma/suma";
 
-
-import './App.css'
+import "./App.css";
 
 function App() {
-
-
   return (
     <>
-     <MathProblem/>
-   
- 
-   
+      <MathProblem />
     </>
-  )
+  );
 }
 
-export default App
+export default App;
