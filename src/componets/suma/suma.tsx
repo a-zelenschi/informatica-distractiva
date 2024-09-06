@@ -64,8 +64,8 @@ const MathProblem = () => {
       if (draggedItem === correctAnswer) {
         setScore(score + 10); // Incrementăm scorul cu 10 puncte
         setFeedbackMessage({ text: "Răspuns corect!", type: 'correct' }); // Setăm mesajul de feedback
-        setAttempts(0); // Resetăm numărul de încercări
-        setHearts([1, 1, 1]); // Resetăm inimile la roșu
+        setDroppedItem(null); // Resetăm răspunsul afișat la ?
+
         setTimeout(() => {
           generateNewExample(); // Generăm un nou exemplu după 1 secundă
         }, 1500); // După 1 secundă, generăm un nou exemplu
