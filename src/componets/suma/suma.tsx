@@ -13,7 +13,7 @@ const MathProblem = () => {
   const [correctAnswer, setCorrectAnswer] = useState<string | null>(null);
   const [feedbackMessage, setFeedbackMessage] = useState<{ text: string, type: 'correct' | 'incorrect' } | null>(null);
   const [score, setScore] = useState<number>(0); // Adăugăm starea pentru scor
-  const [attempts, setAttempts] = useState<number>(0); // Număr de încercări greșite
+  const [, setAttempts] = useState<number>(0); // Număr de încercări greșite treb de corectea !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Attempts
   const [hearts, setHearts] = useState<number[]>([1, 1, 1]); // Starea pentru inimile rămase (1 - roșu, 0 - gri)
   const [draggedItem, setDraggedItem] = useState<string | null>(null); // Starea pentru itemul tras
   const [showModal, setShowModal] = useState<boolean>(false); // Starea pentru modal
@@ -161,7 +161,7 @@ const MathProblem = () => {
         setEmailError('Eroare la trimiterea emailului.');
       }
     } catch (error) {
-      setEmailError('Eroare la trimiterea emailului.');
+      setEmailError('Eroare la trimiterea emailului.'+ error);
     }
   };
 
