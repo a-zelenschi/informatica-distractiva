@@ -192,7 +192,7 @@ const MathProblem = () => {
 
   return (
     <div className="flex flex-col items-center justify-center space-y-4 p-4 sm:p-6 lg:p-8">
-      <div className="text-lg font-bold text-center mb-4">Calculați suma a două numere</div>
+      <div className="text-lg font-bold text-center mb-4">Calculați suma</div>
       <div className="flex space-x-2 mb-4">
         {hearts.map((_, index) => (
           <div
