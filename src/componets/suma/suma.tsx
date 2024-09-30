@@ -1,9 +1,16 @@
-import { useState, useEffect, DragEvent, TouchEvent } from 'react';
+import { useState, useEffect, useCallback, DragEvent, TouchEvent } from 'react';
 
 const MAX_ITEMS = 4;
 const MAX_ATTEMPTS = 3; // Numărul maxim de încercări
 
 const getRandomNumber = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
+
+const getUnitsCount = (score: number) => {
+  if (score < 200) return 1;
+  if (score < 800) return 2;
+  if (score < 1000) return 3;
+  return 4; // Peste 10000, 4 unități
+};
 
 const MathProblem = () => {
   const [items, setItems] = useState<{ id: string; content: string }[]>([]);
@@ -12,29 +19,29 @@ const MathProblem = () => {
   const [rightNumber, setRightNumber] = useState<number>(0);
   const [correctAnswer, setCorrectAnswer] = useState<string | null>(null);
   const [feedbackMessage, setFeedbackMessage] = useState<{ text: string, type: 'correct' | 'incorrect' } | null>(null);
-  const [score, setScore] = useState<number>(0); // Adăugăm starea pentru scor
-  const [, setAttempts] = useState<number>(0); // Număr de încercări greșite treb de corectea !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! Attempts
-  const [hearts, setHearts] = useState<number[]>([1, 1, 1]); // Starea pentru inimile rămase (1 - roșu, 0 - gri)
+  const [score, setScore] = useState<number>(0); // Starea pentru scor
+  const [, setAttempts] = useState<number>(0); // Numărul de încercări greșite
+  const [hearts, setHearts] = useState<number[]>([1, 1, 1]); // Starea pentru inimile rămase
   const [draggedItem, setDraggedItem] = useState<string | null>(null); // Starea pentru itemul tras
   const [showModal, setShowModal] = useState<boolean>(false); // Starea pentru modal
   const [showModalScore, setShowModalScore] = useState<boolean>(false); // Starea pentru modalul de salvare scor
   const [email, setEmail] = useState<string>(''); // Starea pentru email
   const [emailError, setEmailError] = useState<string>(''); // Starea pentru mesajul de eroare al emailului
   const [emailSent, setEmailSent] = useState<boolean>(false); // Starea pentru confirmarea trimiterii emailului
+  const [isAnswerCorrect, setIsAnswerCorrect] = useState<boolean>(false); // Starea pentru a preveni generarea repetată
 
-  useEffect(() => {
-    generateNewExample();
-  }, []);
-
-  const generateNewExample = () => {
-    const newLeftNumber = getRandomNumber(1, 10);
-    const newRightNumber = getRandomNumber(1, 10);
+  const generateNewExample = useCallback(() => {
+    const unitsCount = getUnitsCount(score);
+    
+    // Generăm numerele pe baza unităților
+    const newLeftNumber = getRandomNumber(1, unitsCount * 10);
+    const newRightNumber = getRandomNumber(1, unitsCount * 10);
     const sum = newLeftNumber + newRightNumber;
 
     // Generăm răspunsuri posibile
     const newItems: { id: string; content: string }[] = [];
     while (newItems.length < MAX_ITEMS - 1) {
-      const randomAnswer = getRandomNumber(1, 20).toString();
+      const randomAnswer = getRandomNumber(1, unitsCount * 20).toString();
       if (!newItems.some(item => item.content === randomAnswer) && randomAnswer !== sum.toString()) {
         newItems.push({ id: (newItems.length + 1).toString(), content: randomAnswer });
       }
@@ -48,9 +55,14 @@ const MathProblem = () => {
     setCorrectAnswer(sum.toString());
     setLeftNumber(newLeftNumber);
     setRightNumber(newRightNumber);
-    setDroppedItem(null); // Resetăm răspunsul afișat la ?
-    setFeedbackMessage(null); // Resetăm mesajul de feedback
-  };
+    setDroppedItem(null);
+    setFeedbackMessage(null);
+    setIsAnswerCorrect(false); // Resetăm starea după generarea unei noi întrebări
+  }, [score]);
+
+  useEffect(() => {
+    generateNewExample();
+  }, [generateNewExample]);
 
   const handleDragStart = (e: DragEvent<HTMLDivElement>, index: number) => {
     e.dataTransfer.setData('text/plain', index.toString());
@@ -65,13 +77,16 @@ const MathProblem = () => {
   const handleDrop = (e: DragEvent<HTMLDivElement> | TouchEvent<HTMLDivElement>) => {
     e.preventDefault();
     if (e.type === 'drop' || e.type === 'touchend') {
-      if (draggedItem === correctAnswer) {
+      if (draggedItem === correctAnswer && !isAnswerCorrect) {
         setScore(prevScore => prevScore + 10); // Incrementăm scorul cu 10 puncte
         setFeedbackMessage({ text: "Răspuns corect!", type: 'correct' });
-        setDroppedItem(null); // Resetăm răspunsul afișat la ?
+        setDroppedItem(null);
+        setIsAnswerCorrect(true); // Setăm că răspunsul a fost corect
 
         setTimeout(() => {
-          generateNewExample();
+          if (isAnswerCorrect) {
+            generateNewExample();
+          }
         }, 1500);
       } else {
         setFeedbackMessage({ text: "Răspuns greșit! Încearcă din nou.", type: 'incorrect' });
@@ -161,7 +176,7 @@ const MathProblem = () => {
         setEmailError('Eroare la trimiterea emailului.');
       }
     } catch (error) {
-      setEmailError('Eroare la trimiterea emailului.'+ error);
+      setEmailError('Eroare la trimiterea emailului.' + error);
     }
   };
 
@@ -199,7 +214,7 @@ const MathProblem = () => {
               />
             </svg>
           </div>
-        ))}
+        ))} 
       </div>
       <div className="text-xl font-bold text-center mb-4">Scor: {score}</div>
       <div className="flex flex-col items-center space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
