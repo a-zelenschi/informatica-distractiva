@@ -6,9 +6,9 @@ const MAX_ATTEMPTS = 3; // Numărul maxim de încercări
 const getRandomNumber = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
 
 const getUnitsCount = (score: number) => {
-  if (score < 200) return 1;
-  if (score < 800) return 2;
-  if (score < 1000) return 3;
+  if (score < 50) return 1;
+  if (score < 300) return 2;
+  if (score < 600) return 3;
   return 4; // Peste 10000, 4 unități
 };
 
